@@ -12,9 +12,9 @@ const router = Router();
 
 router.use(authenticateToken);
 
-router.get("/", authorizeRoles("Admin", "Manager"), getAllUsers);
+router.get("/", authorizeRoles("Admin", "Manager", "SuperAdmin"), getAllUsers);
 router.get("/:id", getUserById);
-router.post("/", authorizeRoles("Admin"), createUser);
+router.post("/", authorizeRoles("Admin", "SuperAdmin"), createUser);
 router.put("/:id", authorizeRoles("Admin", "Manager"), updateUser);
 router.delete("/:id", authorizeRoles("Admin"), deleteUser);
 
