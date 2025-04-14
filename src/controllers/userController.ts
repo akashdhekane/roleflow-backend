@@ -26,3 +26,13 @@ export const deleteUser = async (req: Request, res: Response) => {
     await userService.deleteUser(req.params.id);
     res.status(204).send();
 };
+
+export const getReportingPeoples = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.id;
+        const reportingPeoples = await userService.getReportingPeoples(userId);
+        res.json(reportingPeoples);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch reporting people' });
+    }
+};
