@@ -128,10 +128,12 @@ export const getReportingPeoples = async (userId: string) => {
             SELECT 
                 u.*,
                 rh.role_level,
-                d.name AS department_name
+                d.name AS department_name,
+                CONCAT(m.first_name, ' ', m.last_name) AS manager_name
             FROM public.users u
             JOIN role_hierarchy rh ON u.role = rh.role
             LEFT JOIN public.departments d ON u.department_id = d.id
+            LEFT JOIN public.users m ON u.manager_id = m.id
         ),
         recursive_reports AS (
             SELECT 
@@ -166,7 +168,8 @@ export const getReportingPeoples = async (userId: string) => {
         departmentId: row.department_id,
         managerId: row.manager_id,
         createdAt: row.created_at,
-        departmentName: row.department_name // Assuming department_name is part of the query result
+        departmentName: row.department_name,
+        managerName: row.manager_name
     }));
     return reportingPeoples;
 };
