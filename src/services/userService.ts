@@ -157,5 +157,16 @@ export const getReportingPeoples = async (userId: string) => {
     `;
 
     const result = await db.query(query, [userId]);
-    return result.rows;
+    const reportingPeoples = result.rows.map(row => ({
+        id: row.id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        email: row.email,
+        role: row.role,
+        departmentId: row.department_id,
+        managerId: row.manager_id,
+        createdAt: row.created_at,
+        departmentName: row.department_name // Assuming department_name is part of the query result
+    }));
+    return reportingPeoples;
 };
