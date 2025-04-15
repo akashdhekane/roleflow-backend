@@ -36,3 +36,15 @@ export const getReportingPeoples = async (req: Request, res: Response) => {
         res.status(500).json({ error: 'Failed to fetch reporting people' });
     }
 };
+
+export const getReportingManager = async (req: Request, res: Response) => {
+    try {
+        const { role, departmentId } = req.body; // Ensure these are correctly extracted from the request body
+        console.log('Request Body:', req.body); // Add logging to check the request body
+        const reportingManager = await userService.getReportingManager(role, departmentId);
+        res.json(reportingManager);
+    } catch (error) {
+        console.error('Error fetching reporting manager:', error); // Add logging for errors
+        res.status(500).json({ error: 'Failed to fetch reporting manager' });
+    }
+};

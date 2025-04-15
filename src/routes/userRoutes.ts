@@ -6,6 +6,7 @@ import {
     updateUser,
     deleteUser,
     getReportingPeoples,
+    getReportingManager,
 } from "../controllers/userController";
 import { authenticateToken, authorizeRoles } from "../middleware/authMiddleware";
 
@@ -21,5 +22,6 @@ router.post("/", createUser);
 router.put("/:id", authorizeRoles("Admin", "Manager"), updateUser);
 router.delete("/:id", authorizeRoles("Admin"), deleteUser);
 router.get("/reporting/:id", getReportingPeoples);
+router.post("/reporting-manager", getReportingManager);
 
 export default router;

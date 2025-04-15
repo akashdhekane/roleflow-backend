@@ -39,12 +39,13 @@ export const createUser = async (data: any) => {
             email,
             role,
             managerId,
-            password
+            password,
+            departmentId: providedDepartmentId
         } = data;
 
-        // Fetch department ID from manager's record if managerId is provided
-        let departmentId = null;
-        if (managerId) {
+        // Use provided department ID or fetch from manager's record if not provided
+        let departmentId = providedDepartmentId;
+        if (!departmentId && managerId) {
             const managerResult = await db.query(
                 "SELECT department_id FROM users WHERE id = $1",
                 [managerId]
@@ -172,4 +173,48 @@ export const getReportingPeoples = async (userId: string) => {
         managerName: row.manager_name
     }));
     return reportingPeoples;
+};
+
+
+export const getReportingManager = async (role: string, departmentId: string | null) => {
+    const query = `
+        WITH role_hierarchy(role, role_level) AS (
+            SELECT 'SuperAdmin', 5 UNION ALL
+            SELECT 'GroupLeader', 4 UNION ALL
+            SELECT 'Admin', 4 UNION ALL
+            SELECT 'DepartmentManager', 3 UNION ALL
+            SELECT 'Manager', 2 UNION ALL
+            SELECT 'Employee', 1
+        ),
+        current_role_level AS (
+            SELECT role_level
+            FROM role_hierarchy
+            WHERE role = $1
+        )
+        SELECT 
+            u.id, 
+            u.first_name, 
+            u.last_name, 
+            u.email, 
+            u.role, 
+            u.department_id,
+            d.name AS department_name
+        FROM users u
+        JOIN role_hierarchy rh ON u.role = rh.role
+        JOIN current_role_level crl ON rh.role_level > crl.role_level
+        LEFT JOIN departments d ON u.department_id = d.id
+        WHERE ($2::uuid IS NULL OR u.department_id = $2::uuid)
+        ORDER BY rh.role_level DESC;
+    `;
+
+    const result = await db.query(query, [role, departmentId]);
+    return result.rows.map(row => ({
+        id: row.id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        email: row.email,
+        role: row.role,
+        departmentId: row.department_id,
+        departmentName: row.department_name
+    }));
 };
