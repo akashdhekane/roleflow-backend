@@ -23,8 +23,16 @@ export const updateUser = async (req: Request, res: Response) => {
 };
 
 export const deleteUser = async (req: Request, res: Response) => {
-    await userService.deleteUser(req.params.id);
-    res.status(204).send();
+    try {
+        await userService.deleteUser(req.params.id);
+        res.status(200).json({ message: 'User deleted successfully.' }); // Send success message
+    } catch (error: any) {
+        if (error.message.includes('dependencies')) {
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: 'An error occurred while deleting the user.' });
+        }
+    }
 };
 
 export const getReportingPeoples = async (req: Request, res: Response) => {

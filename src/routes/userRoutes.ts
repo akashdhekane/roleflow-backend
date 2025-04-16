@@ -19,8 +19,10 @@ router.get("/", getAllUsers);
 router.get("/:id", getUserById);
 // router.post("/", authorizeRoles("Admin", "SuperAdmin"), createUser);
 router.post("/", createUser);
-router.put("/:id", authorizeRoles("Admin", "Manager"), updateUser);
-router.delete("/:id", authorizeRoles("Admin"), deleteUser);
+// router.put("/:id", authorizeRoles("Admin", "Manager"), updateUser);
+router.put("/:id", updateUser);
+// router.delete("/:id", authorizeRoles("Admin"), deleteUser);
+router.delete("/:id", deleteUser);
 router.get("/reporting/:id", getReportingPeoples);
 router.post("/reporting-manager", getReportingManager);
 

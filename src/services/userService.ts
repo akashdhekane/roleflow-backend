@@ -1,5 +1,6 @@
 import { db } from "../db/init";
 import bcrypt from 'bcryptjs';
+import { validate as isUuid } from 'uuid'; // Import UUID validation function
 
 
 export const getAllUsers = async () => {
@@ -38,13 +39,23 @@ export const createUser = async (data: any) => {
             lastName,
             email,
             role,
-            managerId,
+            managerId: providedManagerId,
             password,
             departmentId: providedDepartmentId
         } = data;
 
-        // Use provided department ID or fetch from manager's record if not provided
-        let departmentId = providedDepartmentId;
+        // Set departmentId to null if it's an empty string
+        let departmentId = providedDepartmentId === "" ? null : providedDepartmentId;
+
+        // Validate departmentId if it's not null
+        if (departmentId && !isUuid(departmentId)) {
+            throw new Error('Invalid department ID format. Must be a valid UUID');
+        }
+
+        // Set managerId to null if it's an empty string
+        let managerId = providedManagerId === "" ? null : providedManagerId;
+
+        // Fetch department ID from manager's record if not provided
         if (!departmentId && managerId) {
             const managerResult = await db.query(
                 "SELECT department_id FROM users WHERE id = $1",
@@ -85,8 +96,24 @@ export const createUser = async (data: any) => {
 };
 
 export const updateUser = async (id: string, data: any) => {
+    // Map the keys to match the database column names
     const fields = Object.keys(data)
-        .map((key, i) => `${key} = $${i + 1}`)
+        .map((key, i) => {
+            switch (key) {
+                case 'firstName':
+                    return `first_name = $${i + 1}`;
+                case 'lastName':
+                    return `last_name = $${i + 1}`;
+                case 'password':
+                    return `password_hash = $${i + 1}`;
+                case 'managerId':
+                    return `manager_id = $${i + 1}`;
+                case 'departmentId':
+                    return `department_id = $${i + 1}`;
+                default:
+                    return `${key} = $${i + 1}`;
+            }
+        })
         .join(", ");
 
     const values = Object.values(data);
@@ -101,7 +128,14 @@ export const updateUser = async (id: string, data: any) => {
 };
 
 export const deleteUser = async (id: string) => {
-    await db.query("DELETE FROM users WHERE id = $1", [id]);
+    try {
+        await db.query("DELETE FROM users WHERE id = $1", [id]);
+    } catch (error: any) {
+        if (error.code === '23503') { // PostgreSQL foreign key violation error code
+            throw new Error('User has dependencies on other records. Please clear all dependencies before deleting.');
+        }
+        throw error;
+    }
 };
 
 
