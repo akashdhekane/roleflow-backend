@@ -73,5 +73,10 @@ export const updateVendor = async (id: string, data: any) => {
 };
 
 export const deleteVendor = async (id: string) => {
-    await db.query("DELETE FROM vendors WHERE id = $1", [id]);
+    try {
+        await db.query("DELETE FROM vendors WHERE id = $1", [id]);
+        return { status: 200, message: 'Vendor deleted successfully.' };
+    } catch (error: any) {
+        throw new Error(`Error deleting vendor: ${error.message}`);
+    }
 };

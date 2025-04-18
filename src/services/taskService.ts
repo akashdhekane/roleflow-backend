@@ -31,14 +31,14 @@ export const createTask = async (data: any) => {
 
     const result = await db.query(
         `INSERT INTO tasks (
-      title, description, status, priority, assigned_to, created_by,
-      due_date, completed_at, tags, start_date, recurrence, closed_date,
-      _local_only, _local_modified, _pending_deletion
-    ) VALUES (
-      $1, $2, $3, $4, $5, $6,
-      $7, $8, $9, $10, $11, $12,
-      $13, $14, $15
-    ) RETURNING *`,
+        title, description, status, priority, assigned_to, created_by,
+        due_date, completed_at, tags, start_date, recurrence, closed_date,
+        _local_only, _local_modified, _pending_deletion
+        ) VALUES (
+        $1, $2, $3, $4, $5, $6,
+        $7, $8, $9, $10, $11, $12,
+        $13, $14, $15
+        ) RETURNING *`,
         [
             title,
             description,

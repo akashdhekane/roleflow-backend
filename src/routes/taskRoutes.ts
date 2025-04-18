@@ -14,8 +14,9 @@ router.use(authenticateToken);
 
 router.get("/", getAllTasks);
 router.get("/:id", getTaskById);
-router.post("/", authorizeRoles("Admin", "Manager", "TeamLead"), createTask);
-router.put("/:id", authorizeRoles("Admin", "Manager", "TeamLead"), updateTask);
-router.delete("/:id", authorizeRoles("Admin", "Manager"), deleteTask);
+// router.post("/", authorizeRoles("Admin", "Manager", "TeamLead"), createTask);
+router.post("/", createTask);
+router.put("/:id", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), updateTask);
+router.delete("/:id", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), deleteTask);
 
 export default router;

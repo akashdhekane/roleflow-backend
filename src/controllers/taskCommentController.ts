@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import * as taskCommentService from "../services/taskCommentService";
+import { request } from "http";
+import { Console } from "console";
 
 // Define a local custom Request type with optional user
 interface CustomRequest extends Request {
@@ -8,11 +10,14 @@ interface CustomRequest extends Request {
 
 export const createTaskComment = async (req: Request, res: Response) => {
     const customReq = req as CustomRequest;
+    console.log("Request for create task comments is:", JSON.stringify(req.body, null, 2)); // Log the request body
 
     try {
+        // Pass the entire request body to the service function
         const comment = await taskCommentService.createTaskComment({
-            ...req.body,
-            createdBy: customReq.user!.id,
+            taskId: req.body.taskId,
+            content: req.body.content,
+            createdBy: req.body.createdBy // Ensure createdBy is set from the user object
         });
         res.status(201).json(comment);
     } catch (error: any) {

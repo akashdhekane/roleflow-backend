@@ -23,6 +23,10 @@ export const updateVendor = async (req: Request, res: Response) => {
 };
 
 export const deleteVendor = async (req: Request, res: Response) => {
-    await vendorService.deleteVendor(req.params.id);
-    res.status(204).send();
+    try {
+        const result = await vendorService.deleteVendor(req.params.id);
+        res.status(result.status).json({ message: result.message });
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
 };
