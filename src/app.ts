@@ -18,7 +18,18 @@ import taskHistoryRoutes from "./routes/taskHistoryRoutes";
 dotenv.config();
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || process.env.ALLOWED_ORIGINS === '*') {
+            callback(null, true);
+        } else {
+            const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [];
+            callback(allowedOrigins.includes(origin) ? null : new Error('Not allowed by CORS'), origin);
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+}));
 app.use(express.json());
 app.use(morgan("dev"));
 

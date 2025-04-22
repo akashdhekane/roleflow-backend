@@ -18,32 +18,28 @@ export const createCustomer = async (data: any) => {
         phone,
         address,
         status,
-        type,
-        company,
-        industry,
         website,
         description,
-        notes,
-        accountManager,
+        type,
+        managerId,
         departmentId,
-        customerSince,
-        lastContactDate,
-        tags,
-        _localOnly,
-        _localModified,
-        _pendingDeletion,
+        serviceCategories,
+        category,
+        notes,
     } = data;
+
+    // Convert empty strings to null for UUID fields
+    const sanitizedManagerId = managerId?.trim() || null;
+    const sanitizedDepartmentId = departmentId?.trim() || null;
 
     const result = await db.query(
         `INSERT INTO customers (
-      name, contact_name, email, phone, address, status, type, company, industry,
-      website, description, notes, account_manager, department_id, customer_since,
-      last_contact_date, tags, _local_only, _local_modified, _pending_deletion
-    ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9,
-      $10, $11, $12, $13, $14, $15,
-      $16, $17, $18, $19, $20
-    ) RETURNING *`,
+            name, contact_name, email, phone, address, status, website, 
+            description, type, manager_id, department_id, service_categories, 
+            category, notes, created_at, updated_at
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, NOW(), NOW()
+        ) RETURNING *`,
         [
             name,
             contactName,
@@ -51,23 +47,16 @@ export const createCustomer = async (data: any) => {
             phone,
             address,
             status,
-            type,
-            company,
-            industry,
             website,
             description,
+            type,
+            sanitizedManagerId,  // Use sanitized value
+            sanitizedDepartmentId,  // Use sanitized value
+            serviceCategories,
+            category,
             notes,
-            accountManager,
-            departmentId,
-            customerSince,
-            lastContactDate,
-            tags,
-            _localOnly ?? false,
-            _localModified ?? false,
-            _pendingDeletion ?? false,
         ]
     );
-
     return result.rows[0];
 };
 

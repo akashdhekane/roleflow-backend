@@ -9,13 +9,11 @@ import {
 import { authenticateToken, authorizeRoles } from "../middleware/authMiddleware";
 
 const router = Router();
-
 router.use(authenticateToken);
 
 router.get("/", getAllCustomers);
-// router.get("/:id", getCustomerById);
-router.post("/", authorizeRoles("Admin", "Manager", "TeamLead"), createCustomer);
-router.post("/", authenticateToken, createCustomer);
+router.post("/", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), createCustomer);
+// Remove this duplicate line: router.post("/", authenticateToken, createCustomer);
 router.put("/:id", authorizeRoles("Admin", "Manager", "TeamLead"), updateCustomer);
 router.delete("/:id", authorizeRoles("Admin", "Manager"), deleteCustomer);
 
