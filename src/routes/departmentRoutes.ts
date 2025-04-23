@@ -12,10 +12,11 @@ const router = Router();
 
 router.use(authenticateToken);
 
-router.post("/", authorizeRoles("Admin", "SuperAdmin"), createDepartment);
+router.post("/", createDepartment);
+// router.post("/", authorizeRoles("Admin", "SuperAdmin"), createDepartment);
 router.get("/", getAllDepartments);
 router.get("/:id", getDepartmentById);
-router.put("/:id", authorizeRoles("Admin", "SuperAdmin"), updateDepartment);
-router.delete("/:id", authorizeRoles("Admin", "SuperAdmin"), deleteDepartment);
+router.put("/:id", updateDepartment);
+router.delete("/:id", deleteDepartment);
 
 export default router;

@@ -12,9 +12,12 @@ const router = Router();
 router.use(authenticateToken);
 
 router.get("/", getAllCustomers);
-router.post("/", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), createCustomer);
+// router.post("/", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), createCustomer);
+router.post("/", createCustomer);
 // Remove this duplicate line: router.post("/", authenticateToken, createCustomer);
-router.put("/:id", authorizeRoles("Admin", "Manager", "TeamLead"), updateCustomer);
-router.delete("/:id", authorizeRoles("Admin", "Manager"), deleteCustomer);
+// router.put("/:id", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), updateCustomer);
+router.put("/:id", updateCustomer);
+// router.delete("/:id", authorizeRoles("Admin", "Manager", "SuperAdmin"), deleteCustomer);
+router.delete("/:id", deleteCustomer);
 
 export default router;

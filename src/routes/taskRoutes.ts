@@ -1,22 +1,11 @@
-import { Router } from "express";
-import {
-    getAllTasks,
-    getTaskById,
-    createTask,
-    updateTask,
-    deleteTask,
-} from "../controllers/taskController";
-import { authenticateToken, authorizeRoles } from "../middleware/authMiddleware";
+import express from "express";
+import * as taskController from "../controllers/taskController";
 
-const router = Router();
+const router = express.Router();
 
-router.use(authenticateToken);
-
-router.get("/", getAllTasks);
-router.get("/:id", getTaskById);
-// router.post("/", authorizeRoles("Admin", "Manager", "TeamLead"), createTask);
-router.post("/", createTask);
-router.put("/:id", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), updateTask);
-router.delete("/:id", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), deleteTask);
+router.post("/", taskController.createTask);
+router.put("/:id", taskController.updateTask);
+router.get("/:id", taskController.getTaskById);
+router.get("/", taskController.getAllTasks);
 
 export default router;

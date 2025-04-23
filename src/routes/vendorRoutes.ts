@@ -14,8 +14,9 @@ router.use(authenticateToken);
 
 router.get("/", getAllVendors);
 router.get("/:id", getVendorById);
-router.post("/", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), createVendor);
-router.put("/:id", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), updateVendor);
-router.delete("/:id", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), deleteVendor);
+// router.post("/", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), createVendor);
+router.post("/", createVendor);
+router.put("/:id", updateVendor);
+router.delete("/:id", deleteVendor);
 
 export default router;

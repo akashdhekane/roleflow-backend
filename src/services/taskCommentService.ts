@@ -14,15 +14,28 @@ export const createTaskComment = async (data: {
     return result.rows[0];
 };
 
-export const updateTaskComment = async (id: string, content: string) => {
+export const updateTaskComment = async (id: string, data: any) => {
+    const filteredEntries = Object.entries(data).filter(
+        ([, value]) => value !== null && value !== undefined && value !== ""
+    );
+
+    const dbData = filteredEntries.reduce((acc, [key, value]) => {
+        acc[key] = value;
+        return acc;
+    }, {} as Record<string, any>);
+
+    const keys = Object.keys(dbData);
+    if (keys.length === 0) {
+        throw new Error("No valid fields to update.");
+    }
+
+    const fields = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
+    const values = Object.values(dbData);
+    values.push(id);
+
     const result = await db.query(
-        `
-    UPDATE task_comments
-    SET content = $1
-    WHERE id = $2
-    RETURNING *
-    `,
-        [content, id]
+        `UPDATE task_comments SET ${fields} WHERE id = $${values.length} RETURNING *`,
+        values
     );
     return result.rows[0];
 };
@@ -38,7 +51,14 @@ export const getCommentsByTaskId = async (taskId: string) => {
     `,
         [taskId]
     );
-    return result.rows;
+    return result.rows.map(row => ({
+        id: row.id,
+        taskId: row.task_id,
+        content: row.content,
+        createdBy: row.created_by,
+        userName: row.user_name,
+        createdAt: row.created_at,
+    }));
 };
 
 // Removed duplicate updateTaskComment function

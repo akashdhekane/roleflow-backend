@@ -29,7 +29,19 @@ export const getAllUsers = async () => {
 
 export const getUserById = async (id: string) => {
     const result = await db.query("SELECT * FROM users WHERE id = $1", [id]);
-    return result.rows[0];
+    const row = result.rows[0];
+    if (!row) return null;
+    return {
+        id: row.id,
+        firstName: row.first_name,
+        lastName: row.last_name,
+        email: row.email,
+        role: row.role,
+        departmentId: row.department_id,
+        managerId: row.manager_id,
+        createdAt: row.created_at, // maps created_at (db) to createdAt (camelCase)
+        // Add more fields as needed
+    };
 };
 
 export const createUser = async (data: any) => {
@@ -96,27 +108,31 @@ export const createUser = async (data: any) => {
 };
 
 export const updateUser = async (id: string, data: any) => {
-    // Map the keys to match the database column names
-    const fields = Object.keys(data)
-        .map((key, i) => {
-            switch (key) {
-                case 'firstName':
-                    return `first_name = $${i + 1}`;
-                case 'lastName':
-                    return `last_name = $${i + 1}`;
-                case 'password':
-                    return `password_hash = $${i + 1}`;
-                case 'managerId':
-                    return `manager_id = $${i + 1}`;
-                case 'departmentId':
-                    return `department_id = $${i + 1}`;
-                default:
-                    return `${key} = $${i + 1}`;
-            }
-        })
-        .join(", ");
+    const fieldMap: Record<string, string> = {
+        firstName: "first_name",
+        lastName: "last_name",
+        password: "password_hash",
+        managerId: "manager_id",
+        departmentId: "department_id",
+    };
 
-    const values = Object.values(data);
+    const filteredEntries = Object.entries(data).filter(
+        ([, value]) => value !== null && value !== undefined && value !== ""
+    );
+
+    const dbData = filteredEntries.reduce((acc, [key, value]) => {
+        const dbKey = fieldMap[key] || key;
+        acc[dbKey] = value;
+        return acc;
+    }, {} as Record<string, any>);
+
+    const keys = Object.keys(dbData);
+    if (keys.length === 0) {
+        throw new Error("No valid fields to update.");
+    }
+
+    const fields = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
+    const values = Object.values(dbData);
     values.push(id);
 
     const result = await db.query(

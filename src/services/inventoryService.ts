@@ -2,12 +2,46 @@ import { db } from "../db/init";
 
 export const getAllInventoryItems = async () => {
     const result = await db.query("SELECT * FROM inventory ORDER BY last_updated DESC");
-    return result.rows;
+    return result.rows.map(row => ({
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        quantity: row.quantity,
+        minQuantity: row.min_quantity,
+        category: row.category,
+        status: row.status,
+        location: row.location,
+        assignedTo: row.assigned_to,
+        vendor: row.vendor,
+        cost: row.cost,
+        imageUrl: row.image_url,
+        sku: row.sku,
+        departmentId: row.department_id,
+        lastUpdated: row.last_updated,
+    }));
 };
 
 export const getInventoryItemById = async (id: string) => {
     const result = await db.query("SELECT * FROM inventory WHERE id = $1", [id]);
-    return result.rows[0];
+    const row = result.rows[0];
+    if (!row) return null;
+    return {
+        id: row.id,
+        name: row.name,
+        description: row.description,
+        quantity: row.quantity,
+        minQuantity: row.min_quantity,
+        category: row.category,
+        status: row.status,
+        location: row.location,
+        assignedTo: row.assigned_to,
+        vendor: row.vendor,
+        cost: row.cost,
+        imageUrl: row.image_url,
+        sku: row.sku,
+        departmentId: row.department_id,
+        lastUpdated: row.last_updated,
+    };
 };
 
 export const createInventoryItem = async (data: any) => {
@@ -56,10 +90,30 @@ export const createInventoryItem = async (data: any) => {
 };
 
 export const updateInventoryItem = async (id: string, data: any) => {
-    const fields = Object.keys(data)
-        .map((key, i) => `${key} = $${i + 1}`)
-        .join(", ");
-    const values = Object.values(data);
+    const fieldMap: Record<string, string> = {
+        minQuantity: "min_quantity",
+        assignedTo: "assigned_to",
+        imageUrl: "image_url",
+        departmentId: "department_id",
+    };
+
+    const filteredEntries = Object.entries(data).filter(
+        ([, value]) => value !== null && value !== undefined && value !== ""
+    );
+
+    const dbData = filteredEntries.reduce((acc, [key, value]) => {
+        const dbKey = fieldMap[key] || key;
+        acc[dbKey] = value;
+        return acc;
+    }, {} as Record<string, any>);
+
+    const keys = Object.keys(dbData);
+    if (keys.length === 0) {
+        throw new Error("No valid fields to update.");
+    }
+
+    const fields = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
+    const values = Object.values(dbData);
     values.push(id);
 
     const result = await db.query(

@@ -30,24 +30,56 @@ export const getAttachmentsByTaskId = async (taskId: string) => {
     `,
         [taskId]
     );
-    return result.rows;
+    return result.rows.map(row => ({
+        id: row.id,
+        taskId: row.task_id,
+        fileName: row.file_name,
+        fileType: row.file_type,
+        fileSize: row.file_size,
+        url: row.url,
+        uploadedBy: row.uploaded_by,
+        uploadedByName: row.uploaded_by_name,
+        uploadedAt: row.uploaded_at,
+    }));
 };
 
 export const updateTaskAttachment = async (
     id: string,
-    data: Partial<{ fileName: string; fileType: string; fileSize?: number; url: string }>
+    data: Partial<{
+        fileName: string;
+        fileType: string;
+        fileSize: number;
+        url: string;
+    }>
 ) => {
+    const fieldMap: Record<string, string> = {
+        fileName: "file_name",
+        fileType: "file_type",
+        fileSize: "file_size",
+    };
+
+    const filteredEntries = Object.entries(data).filter(
+        ([, value]) => value !== null && value !== undefined && value !== ""
+    );
+
+    const dbData = filteredEntries.reduce((acc, [key, value]) => {
+        const dbKey = fieldMap[key] || key;
+        acc[dbKey] = value;
+        return acc;
+    }, {} as Record<string, any>);
+
+    const keys = Object.keys(dbData);
+    if (keys.length === 0) {
+        throw new Error("No valid fields to update.");
+    }
+
+    const fields = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
+    const values = Object.values(dbData);
+    values.push(id);
+
     const result = await db.query(
-        `
-    UPDATE task_attachments
-    SET file_name = COALESCE($1, file_name),
-        file_type = COALESCE($2, file_type),
-        file_size = COALESCE($3, file_size),
-        url = COALESCE($4, url)
-    WHERE id = $5
-    RETURNING *
-    `,
-        [data.fileName, data.fileType, data.fileSize || 0, data.url, id]
+        `UPDATE task_attachments SET ${fields} WHERE id = $${values.length} RETURNING *`,
+        values
     );
     return result.rows[0];
 };
