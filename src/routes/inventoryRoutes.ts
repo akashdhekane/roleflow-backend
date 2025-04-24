@@ -14,8 +14,9 @@ router.use(authenticateToken);
 
 router.get("/", getAllInventoryItems);
 router.get("/:id", getInventoryItemById);
-router.post("/", authorizeRoles("Admin", "Manager", "TeamLead"), createInventoryItem);
-router.put("/:id", authorizeRoles("Admin", "Manager", "TeamLead"), updateInventoryItem);
-router.delete("/:id", authorizeRoles("Admin", "Manager"), deleteInventoryItem);
+router.post("/", createInventoryItem);
+// router.post("/", authorizeRoles("Admin", "Manager", "TeamLead"), createInventoryItem);
+router.put("/:id", updateInventoryItem);
+router.delete("/:id", deleteInventoryItem);
 
 export default router;
