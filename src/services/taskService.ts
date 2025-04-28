@@ -2,26 +2,43 @@ import { db } from "../db/init";
 
 export const getAllTasks = async () => {
     const result = await db.query("SELECT * FROM tasks ORDER BY created_at DESC");
-    return result.rows.map(row => ({
-        id: row.id,
-        title: row.title,
-        description: row.description,
-        status: row.status,
-        priority: row.priority,
-        assignedTo: row.assigned_to,
-        createdBy: row.created_by,
-        dueDate: row.due_date,
-        completedAt: row.completed_at,
-        tags: row.tags,
-        startDate: row.start_date,
-        recurrence: row.recurrence,
-        closedDate: row.closed_date,
-        localOnly: row._local_only,
-        localModified: row._local_modified,
-        pendingDeletion: row._pending_deletion,
-        createdAt: row.created_at,
-        updatedAt: row.updated_at,
+    const tasks = await Promise.all(result.rows.map(async row => {
+        let assignedToName = null;
+        if (row.is_user_assignee) {
+            const userRes = await db.query(
+                "SELECT first_name, last_name FROM users WHERE id = $1",
+                [row.assigned_to]
+            );
+            if (userRes.rows[0]) {
+                assignedToName = `${userRes.rows[0].first_name} ${userRes.rows[0].last_name}`;
+            }
+        } else {
+            const custRes = await db.query(
+                "SELECT name FROM customers WHERE id = $1",
+                [row.assigned_to]
+            );
+            if (custRes.rows[0]) {
+                assignedToName = custRes.rows[0].name;
+            }
+        }
+
+        // Fetch createdByName from users table using created_by
+        let createdByName = null;
+        const creatorRes = await db.query(
+            "SELECT first_name, last_name FROM users WHERE id = $1",
+            [row.created_by]
+        );
+        if (creatorRes.rows[0]) {
+            createdByName = `${creatorRes.rows[0].first_name} ${creatorRes.rows[0].last_name}`;
+        }
+
+        return {
+            ...row,
+            assignedToName,
+            createdByName
+        };
     }));
+    return tasks;
 };
 
 export const getTaskById = async (id: string) => {
