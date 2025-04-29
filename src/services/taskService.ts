@@ -4,7 +4,7 @@ export const getAllTasks = async () => {
     const result = await db.query("SELECT * FROM tasks ORDER BY created_at DESC");
     const tasks = await Promise.all(result.rows.map(async row => {
         let assignedToName = null;
-        if (row.is_user_assignee) {
+        if (row.assignie_type === "user") {
             const userRes = await db.query(
                 "SELECT first_name, last_name FROM users WHERE id = $1",
                 [row.assigned_to]
@@ -12,7 +12,15 @@ export const getAllTasks = async () => {
             if (userRes.rows[0]) {
                 assignedToName = `${userRes.rows[0].first_name} ${userRes.rows[0].last_name}`;
             }
-        } else {
+        } else if (row.assignie_type === "vendor") {
+            const vendorRes = await db.query(
+                "SELECT name FROM vendors WHERE id = $1",
+                [row.assigned_to]
+            );
+            if (vendorRes.rows[0]) {
+                assignedToName = vendorRes.rows[0].name;
+            }
+        } else if (row.assignie_type === "customer") {
             const custRes = await db.query(
                 "SELECT name FROM customers WHERE id = $1",
                 [row.assigned_to]
@@ -33,9 +41,27 @@ export const getAllTasks = async () => {
         }
 
         return {
-            ...row,
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            status: row.status,
+            priority: row.priority,
+            assignedTo: row.assigned_to,
             assignedToName,
-            createdByName
+            assigneeType: row.assignie_type,
+            createdBy: row.created_by,
+            createdByName,
+            dueDate: row.due_date,
+            completedAt: row.completed_at,
+            tags: row.tags,
+            startDate: row.start_date,
+            recurrence: row.recurrence,
+            closedDate: row.closed_date,
+            localOnly: row._local_only,
+            localModified: row._local_modified,
+            pendingDeletion: row._pending_deletion,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
         };
     }));
     return tasks;
@@ -47,18 +73,40 @@ export const getTaskById = async (id: string) => {
     if (!row) return null;
 
     let assignedToName = null;
-    if (row.is_user_assignee) {
-        // assigned_to refers to user
-        const userRes = await db.query("SELECT first_name, last_name FROM users WHERE id = $1", [row.assigned_to]);
+    if (row.assignie_type === "user") {
+        const userRes = await db.query(
+            "SELECT first_name, last_name FROM users WHERE id = $1",
+            [row.assigned_to]
+        );
         if (userRes.rows[0]) {
             assignedToName = `${userRes.rows[0].first_name} ${userRes.rows[0].last_name}`;
         }
-    } else {
-        // assigned_to refers to customer
-        const custRes = await db.query("SELECT name FROM customers WHERE id = $1", [row.assigned_to]);
+    } else if (row.assignie_type === "vendor") {
+        const vendorRes = await db.query(
+            "SELECT name FROM vendors WHERE id = $1",
+            [row.assigned_to]
+        );
+        if (vendorRes.rows[0]) {
+            assignedToName = vendorRes.rows[0].name;
+        }
+    } else if (row.assignie_type === "customer") {
+        const custRes = await db.query(
+            "SELECT name FROM customers WHERE id = $1",
+            [row.assigned_to]
+        );
         if (custRes.rows[0]) {
             assignedToName = custRes.rows[0].name;
         }
+    }
+
+    // Fetch createdByName from users table using created_by
+    let createdByName = null;
+    const creatorRes = await db.query(
+        "SELECT first_name, last_name FROM users WHERE id = $1",
+        [row.created_by]
+    );
+    if (creatorRes.rows[0]) {
+        createdByName = `${creatorRes.rows[0].first_name} ${creatorRes.rows[0].last_name}`;
     }
 
     return {
@@ -69,8 +117,9 @@ export const getTaskById = async (id: string) => {
         priority: row.priority,
         assignedTo: row.assigned_to,
         assignedToName: assignedToName,
-        isUserAssignee: row.is_user_assignee,
+        assigneeType: row.assignie_type,
         createdBy: row.created_by,
+        createdByName: createdByName,
         dueDate: row.due_date,
         completedAt: row.completed_at,
         tags: row.tags,
@@ -115,20 +164,15 @@ function mapTaskData(data: any) {
 }
 
 export const createTask = async (data: any) => {
-    const {
-        isUserAssignee, // camelCase from frontend
-    } = data;
-
     const mapped = mapTaskData(data);
 
-    // Ensure is_user_assignee is always set (default to true or false as needed)
-    mapped.is_user_assignee = 
-        typeof data.isUserAssignee === "boolean" ? data.isUserAssignee : true; // or false, depending on your logic
+    // Accept both camelCase and snake_case for assignee type
+    mapped.assignie_type = data.assigneeType || data.assignie_type;
 
     const result = await db.query(
         `INSERT INTO tasks (
-            title, description, status, priority, created_by, assigned_to, start_date, due_date, closed_date,
-            recurrence, created_at, updated_at, completed_at, _local_only, _local_modified, _pending_deletion, tags, is_user_assignee
+            title, description, status, priority, created_by, assigned_to, assignie_type, start_date, due_date, closed_date,
+            recurrence, created_at, updated_at, completed_at, _local_only, _local_modified, _pending_deletion, tags
         ) VALUES (
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
             $11, $12, $13, $14, $15, $16, $17, $18
@@ -140,6 +184,7 @@ export const createTask = async (data: any) => {
             mapped.priority,
             mapped.created_by,
             mapped.assigned_to,
+            mapped.assignie_type,
             mapped.start_date,
             mapped.due_date,
             mapped.closed_date,
@@ -151,7 +196,6 @@ export const createTask = async (data: any) => {
             mapped._local_modified,
             mapped._pending_deletion,
             mapped.tags,
-            mapped.is_user_assignee, // <-- always set
         ]
     );
     return result.rows[0];
@@ -159,8 +203,8 @@ export const createTask = async (data: any) => {
 
 export const updateTask = async (id: string, data: any) => {
     const mapped = mapTaskData(data);
-    if ('isUserAssignee' in data) {
-        mapped.is_user_assignee = data.isUserAssignee;
+    if ('assigneeType' in data) {
+        mapped.assignie_type = data.assigneeType;
     }
 
     // Remove id from update fields if present
