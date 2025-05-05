@@ -31,6 +31,15 @@ export const getTaskById = async (req: Request, res: Response) => {
     }
 };
 
+export const getTasksByUserId = async (req: Request, res: Response) => {
+    try {
+        const tasks = await taskService.getTasksByUserId(req.params.userId);
+        res.status(200).json(tasks);
+    } catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+    }
+};
+
 export const getAllTasks = async (req: Request, res: Response) => {
     try {
         const tasks = await taskService.getAllTasks();
@@ -38,6 +47,12 @@ export const getAllTasks = async (req: Request, res: Response) => {
     } catch (error) {
         res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
     }
+};
+
+export const getVisibleTasksForUser = async (req: Request, res: Response) => {
+    const userId = req.params.id;
+    const tasks = await taskService.getVisibleTasksForUser(userId);
+    res.json(tasks);
 };
 
 export const deleteTask = async (req: Request, res: Response) => {

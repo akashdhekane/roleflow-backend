@@ -134,6 +134,75 @@ export const getTaskById = async (id: string) => {
     };
 };
 
+export const getTasksByUserId = async (userId: string) => {
+    const result = await db.query(
+        "SELECT * FROM tasks WHERE assigned_to = $1 AND assignie_type = 'user' ORDER BY created_at DESC",
+        [userId]
+    );
+    const tasks = await Promise.all(result.rows.map(async row => {
+        let assignedToName = null;
+        if (row.assignee_type === "user") {
+            const userRes = await db.query(
+                "SELECT first_name, last_name FROM users WHERE id = $1",
+                [row.assigned_to]
+            );
+            if (userRes.rows[0]) {
+                assignedToName = `${userRes.rows[0].first_name} ${userRes.rows[0].last_name}`;
+            }
+        } else if (row.assignee_type === "vendor") {
+            const vendorRes = await db.query(
+                "SELECT name FROM vendors WHERE id = $1",
+                [row.assigned_to]
+            );
+            if (vendorRes.rows[0]) {
+                assignedToName = vendorRes.rows[0].name;
+            }
+        } else if (row.assignee_type === "customer") {
+            const custRes = await db.query(
+                "SELECT name FROM customers WHERE id = $1",
+                [row.assigned_to]
+            );
+            if (custRes.rows[0]) {
+                assignedToName = custRes.rows[0].name;
+            }
+        }
+
+        let createdByName = null;
+        const creatorRes = await db.query(
+            "SELECT first_name, last_name FROM users WHERE id = $1",
+            [row.created_by]
+        );
+        if (creatorRes.rows[0]) {
+            createdByName = `${creatorRes.rows[0].first_name} ${creatorRes.rows[0].last_name}`;
+        }
+
+        return {
+            id: row.id,
+            title: row.title,
+            description: row.description,
+            status: row.status,
+            priority: row.priority,
+            assignedTo: row.assigned_to,
+            assignedToName,
+            assigneeType: row.assignee_type,
+            createdBy: row.created_by,
+            createdByName,
+            dueDate: row.due_date,
+            completedAt: row.completed_at,
+            tags: row.tags,
+            startDate: row.start_date,
+            recurrence: row.recurrence,
+            closedDate: row.closed_date,
+            localOnly: row._local_only,
+            localModified: row._local_modified,
+            pendingDeletion: row._pending_deletion,
+            createdAt: row.created_at,
+            updatedAt: row.updated_at,
+        };
+    }));
+    return tasks;
+};
+
 // Utility to map camelCase to snake_case for known fields
 const fieldMap: Record<string, string> = {
     createdBy: "created_by",
@@ -229,6 +298,71 @@ export const updateTask = async (id: string, data: any) => {
         values
     );
     return result.rows[0];
+};
+
+export const getVisibleTasksForUser = async (id: string) => {
+    const query = `
+      WITH cur_user AS (
+        SELECT 
+          u.id AS user_id,
+          u.role,
+          u.department_id,
+          CASE u.role
+            WHEN 'SuperAdmin' THEN 1
+            WHEN 'Admin' THEN 2
+            WHEN 'GroupLeader' THEN 3
+            WHEN 'DepartmentManager' THEN 4
+            WHEN 'Manager' THEN 5
+            WHEN 'TeamLead' THEN 6
+            WHEN 'Employee' THEN 7
+            WHEN 'Contractor' THEN 8
+            WHEN 'Guest' THEN 8
+            ELSE 100
+          END AS role_level
+        FROM users u
+        WHERE u.id = $1
+      ),
+      department_users AS (
+        SELECT u.id
+        FROM users u, cur_user cu
+        WHERE u.department_id = cu.department_id
+      ),
+      reportees AS (
+        SELECT u.id FROM users u WHERE u.manager_id = $1
+      ),
+      visible_tasks AS (
+        SELECT t.*
+        FROM tasks t, cur_user cu
+        WHERE
+          cu.role_level IN (1, 2) -- SuperAdmin and Admin see all
+  
+          OR (cu.role_level = 3 AND (
+            t.assigned_to = cu.user_id
+            OR t.assigned_to IN (SELECT id FROM department_users)
+          ))
+  
+          OR (cu.role_level = 4 AND (
+            t.assigned_to = cu.user_id
+            OR t.assigned_to IN (SELECT id FROM department_users)
+          ))
+  
+          OR (cu.role_level = 5 AND (
+            t.assigned_to = cu.user_id
+            OR t.assigned_to IN (SELECT id FROM department_users)
+          ))
+  
+          OR (cu.role_level = 6 AND (
+            t.assigned_to = cu.user_id
+            OR t.assigned_to IN (SELECT id FROM reportees)
+          ))
+  
+          OR (cu.role_level >= 7 AND t.assigned_to = cu.user_id)
+      )
+      SELECT * FROM visible_tasks;
+    `;
+
+    const { rows } = await pool.query(query, [id]);
+    return rows;
 };
 
 export const deleteTask = async (id: string) => {
