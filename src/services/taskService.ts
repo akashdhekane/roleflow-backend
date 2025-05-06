@@ -361,7 +361,7 @@ export const getVisibleTasksForUser = async (id: string) => {
       SELECT * FROM visible_tasks;
     `;
 
-    const { rows } = await pool.query(query, [id]);
+    const { rows } = await db.query(query, [id]);
     return rows;
 };
 

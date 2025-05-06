@@ -14,6 +14,8 @@ import taskCommentRoutes from "./routes/taskCommentRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 import taskAttachmentRoutes from "./routes/taskAttachmentRoutes";
 import taskHistoryRoutes from "./routes/taskHistoryRoutes";
+import settingsRoutes from "./routes/settingsRoutes";
+import permissionsRoutes from "./routes/permissionsRoutes";
 
 dotenv.config();
 const app = express();
@@ -43,6 +45,9 @@ app.use("/api/departments", departmentRoutes);
 app.use("/api/task-comments", taskCommentRoutes);
 app.use("/api/task-attachments", taskAttachmentRoutes);
 app.use("/api/task-history", taskHistoryRoutes);
+app.use("/api/settings", settingsRoutes);
+app.use("/api/task-attachments", taskAttachmentRoutes);
+app.use("/api", permissionsRoutes);
 app.use(errorHandler);
 
 export default app;
