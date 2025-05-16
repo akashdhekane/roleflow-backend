@@ -1,22 +1,13 @@
 import { Router } from "express";
-import {
-    getAllInventoryItems,
-    getInventoryItemById,
-    createInventoryItem,
-    updateInventoryItem,
-    deleteInventoryItem,
-} from "../controllers/inventoryController";
-import { authenticateToken, authorizeRoles } from "../middleware/authMiddleware";
+import * as inventoryController from "../controllers/inventoryController";
 
 const router = Router();
 
-router.use(authenticateToken);
-
-router.get("/", getAllInventoryItems);
-router.get("/:id", getInventoryItemById);
-router.post("/", createInventoryItem);
-// router.post("/", authorizeRoles("Admin", "Manager", "TeamLead"), createInventoryItem);
-router.put("/:id", updateInventoryItem);
-router.delete("/:id", deleteInventoryItem);
+router.get("/", inventoryController.getAllInventory);
+router.get("/:id", inventoryController.getInventoryById);
+router.post("/", inventoryController.createInventory);
+router.patch("/:id", inventoryController.updateInventory);
+router.delete("/:id", inventoryController.deleteInventory);
+router.patch("/:id/quantity", inventoryController.updateInventoryQuantity);
 
 export default router;

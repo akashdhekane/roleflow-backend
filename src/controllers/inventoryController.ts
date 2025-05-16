@@ -1,28 +1,65 @@
-import { Request, Response } from "express";
 import * as inventoryService from "../services/inventoryService";
+import { Request, Response } from "express";
 
-export const getAllInventoryItems = async (_req: Request, res: Response) => {
-    const items = await inventoryService.getAllInventoryItems();
-    res.json(items);
+export const getAllInventory = async (_req: Request, res: Response) => {
+    try {
+        const items = await inventoryService.getAllInventory();
+        res.json(items);
+    } catch (err) {
+        res.status(500).json({ error: true, message: "Failed to fetch inventory items" });
+    }
 };
 
-export const getInventoryItemById = async (req: Request, res: Response) => {
-    const item = await inventoryService.getInventoryItemById(req.params.id);
-    if (!item) return res.status(404).json({ error: "Inventory item not found" });
-    res.json(item);
+export const getInventoryById = async (req: Request, res: Response) => {
+    try {
+        const item = await inventoryService.getInventoryById(req.params.id);
+        if (!item) {
+            return res.status(404).json({ error: true, message: "Inventory item not found" });
+        }
+        res.json(item);
+    } catch (err) {
+        res.status(500).json({ error: true, message: "Failed to fetch inventory item" });
+    }
 };
 
-export const createInventoryItem = async (req: Request, res: Response) => {
-    const newItem = await inventoryService.createInventoryItem(req.body);
-    res.status(201).json(newItem);
+export const createInventory = async (req: Request, res: Response) => {
+    try {
+        const item = await inventoryService.createInventory(req.body);
+        res.status(201).json(item);
+    } catch (err) {
+        res.status(400).json({ error: true, message: "Failed to create inventory item" });
+    }
 };
 
-export const updateInventoryItem = async (req: Request, res: Response) => {
-    const updated = await inventoryService.updateInventoryItem(req.params.id, req.body);
-    res.json(updated);
+export const updateInventory = async (req: Request, res: Response) => {
+    try {
+        const item = await inventoryService.updateInventory(req.params.id, req.body);
+        if (!item) {
+            return res.status(404).json({ error: true, message: "Inventory item not found" });
+        }
+        res.json(item);
+    } catch (err) {
+        res.status(400).json({ error: true, message: "Failed to update inventory item" });
+    }
 };
 
-export const deleteInventoryItem = async (req: Request, res: Response) => {
-    await inventoryService.deleteInventoryItem(req.params.id);
-    res.status(204).send();
+export const deleteInventory = async (req: Request, res: Response) => {
+    try {
+        await inventoryService.deleteInventory(req.params.id);
+        res.status(204).send();
+    } catch (err) {
+        res.status(400).json({ error: true, message: "Failed to delete inventory item" });
+    }
+};
+
+export const updateInventoryQuantity = async (req: Request, res: Response) => {
+    try {
+        const item = await inventoryService.updateInventoryQuantity(req.params.id, req.body.quantity);
+        if (!item) {
+            return res.status(404).json({ error: true, message: "Inventory item not found" });
+        }
+        res.json(item);
+    } catch (err) {
+        res.status(400).json({ error: true, message: "Failed to update inventory quantity" });
+    }
 };

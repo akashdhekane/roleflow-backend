@@ -11,8 +11,8 @@ import { authenticateToken, authorizeRoles } from "../middleware/authMiddleware"
 const router = Router();
 router.use(authenticateToken);
 
-router.get("/", getAllCustomers);
-// router.post("/", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), createCustomer);
+// router.get("/", getAllCustomers);
+router.post("/", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), createCustomer);
 router.post("/", createCustomer);
 // Remove this duplicate line: router.post("/", authenticateToken, createCustomer);
 // router.put("/:id", authorizeRoles("Admin", "Manager", "TeamLead", "SuperAdmin"), updateCustomer);

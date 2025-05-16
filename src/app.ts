@@ -9,13 +9,17 @@ import taskRoutes from "./routes/taskRoutes";
 import vendorRoutes from "./routes/vendorRoutes";
 import customerRoutes from "./routes/customerRoutes";
 import inventoryRoutes from "./routes/inventoryRoutes";
+import assetsRoutes from "./routes/assetsRoutes";
+import licensesRoutes from "./routes/licensesRoutes";
+import maintenanceRecordsRoutes from "./routes/maintenanceRecordsRoutes";
+
 import departmentRoutes from "./routes/departmentRoutes";
 import taskCommentRoutes from "./routes/taskCommentRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 import taskAttachmentRoutes from "./routes/taskAttachmentRoutes";
 import taskHistoryRoutes from "./routes/taskHistoryRoutes";
 import settingsRoutes from "./routes/settingsRoutes";
-import permissionsRoutes from "./routes/permissionsRoutes";
+import userPermissionsRoutes from "./routes/userPermissionsRoutes";
 
 dotenv.config();
 const app = express();
@@ -41,13 +45,17 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/vendors", vendorRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/inventory", inventoryRoutes);
+app.use("/api/assets", assetsRoutes);
+app.use("/api/licenses", licensesRoutes);
+app.use("/api/maintenance-records", maintenanceRecordsRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/task-comments", taskCommentRoutes);
 app.use("/api/task-attachments", taskAttachmentRoutes);
 app.use("/api/task-history", taskHistoryRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/task-attachments", taskAttachmentRoutes);
-app.use("/api", permissionsRoutes);
+app.use("/api", userPermissionsRoutes);
 app.use(errorHandler);
 
 export default app;
+
